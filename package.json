@@ -1,0 +1,29 @@
+{
+  "name": "ghl-analytics",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/lmd-16/ghl-analytics#readme",
+  "bugs": {
+    "url": "https://github.com/lmd-16/ghl-analytics/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lmd-16/ghl-analytics.git"
+  },
+  "license": "ISC",
+  "author": "Marie L.",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.22.3"
+  },
+  "keywords": []
+}
