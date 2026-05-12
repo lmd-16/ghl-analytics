@@ -112,7 +112,152 @@ app.get('/api/business/profile', authenticate, (req,res) =>{
     )
 
 })
+app.post('/api/clients', authenticate, (req,res) =>{
+    const {email, phone, client_name} = req.body; 
+    const business_id = req.business.id; 
+    if(!client_name){
+        return res.status(400).json({error: 'Client name is required'});
+    }
+    db.query('INSERT INTO client(bus_id, client_name, phone, email) VALUES(?,?,?,?)',
+        [business_id, client_name, phone, email],
+        (err,result) => {
+            if(err) {
+                return res.status(500).json({error: err.message});
+            }
+            res.status(201).json({message: 'Client created', client_id: result.insertId});
+        }
+    );
+});
 
+app.get('/api/clients', authenticate, (req,res)=>{
+    const business_id = req.business.id; 
+    db.query('SELECT * FROM client WHERE bus_id = ? ORDER BY created_at DESC',
+        [business_id],
+        (err, results)=>{
+            if(err){
+                return res.status(500).json({error: err.message})
+            }
+            res.json(results);
+        }
+    );
+});
+
+app.get('/api/clients/:id', authenticate, (req,res)=>{
+    const business_id = req.business.id; 
+    const client_id = req.params.id;
+
+    db.query('SELECT * FROM client WHERE id = ? AND bus_id = ?',
+        [client_id, business_id],
+        (err, results)=>{
+            if(err){
+                return res.status(500).json({error: err.message});
+            }
+            if(results.length === 0){
+                return res.status(404).json({error: 'Client not found'})
+            }
+            res.json(results[0]);
+        }
+    );
+});
+
+app.put('/api/clients/:id', authenticate, (req,res)=>{
+    const business_id = req.business.id; 
+    const client_id = req.params.id; 
+    const {client_name, phone, email} = req.body;
+
+    db.query('UPDATE client SET client_name = ?, email = ?, phone = ? WHERE id = ? AND bus_id = ?', 
+        [client_name, email, phone, client_id, business_id],
+        (err, result)=> {
+            if(err){
+                return res.status(500).json({error: err.message});
+            }
+            if(result.affectedRows === 0){
+                return res.status(404).json({error: 'Client not found'});
+            }
+            res.json({message: 'Client updated'});
+        }
+    );
+
+});
+
+app.delete('/api/clients/:id', authenticate, (req,res)=>{
+    const business_id = req.business.id;
+    const client_id = req.params.id; 
+    db.query('DELETE FROM client WHERE bus_id = ? AND id = ?',
+        [business_id, client_id],
+        (err, result) =>{
+            if(err){
+                return res.status(500).json({error: err.message});
+            }
+            if(result.affectedRows === 0){
+                return res.status(404).json({error: 'Client not found'});
+            }
+            res.json({message: 'Client deleted'});
+        }
+    )
+})
+app.get('/api/client/:client_id/campaigns', authenticate, (req,res)=> {
+    const business_id = req.business.id; 
+    const client_id = req.params.client_id; 
+    db.query('SELECT * FROM campaign WHERE client_id = ? AND bus_id = ? ORDER BY created_at DESC', 
+        [client_id, business_id], 
+        (err, result)=>{
+            if(err){
+                return req.status(500).json({error: err.message});
+            }
+            res.json(result);
+        }
+    )
+})
+
+app.get('/api/campaign', authenticate, (req, res)=> {
+    const business_id = req.business.id; 
+    db.query('SELECT * FROM campaign WHERE bus_id = ?',
+        [business_id],
+        (err, result)=>{
+            if(err){
+                return res.status(500).json({error: err.message});
+            }
+            res.json(result);
+        }
+    );
+});
+
+
+app.post('/api/campaigns', authenticate, (req, res)=>{
+    const business_id = req.business.id; 
+    const {client_id, campaign_name, start_date, end_date, } = req.body; 
+    if(!campaign_name){
+        return res.status(400).json({error: 'Campaign name is required'});
+    }
+    db.query('INSERT INTO campaign(bus_id, client_id, campaign_name, start_date, end_date) VALUES (?,?,?,?, ?)',
+        [business_id, client_id, campaign_name, start_date, end_date],
+    (err, result)=>{
+        if(err){
+            return res.status(500).json({error: err.message})
+        }
+        res.status(201).json({
+            message: 'Campaign created',
+            campaign_id: result.insertId
+    });
+    });
+});
+api.get('/api/campaigns/:id', authenticate, (req, res)=>{
+    const business_id = req.business.id; 
+    const campaign_id = req.params.id; 
+    db.query('SELECT * FROM campaign WHERE bus_id = ? AND id = ?',
+        [business_id, campaign_id],
+        (err, result)=>{
+            if(err){
+                return res.status(500).json({error: err.message});
+            }
+            if(result.length === 0){
+                return res.status(404).json({error: 'Campaign not found'});
+            }
+            res.json(result[0]);
+        }
+    );
+});
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });

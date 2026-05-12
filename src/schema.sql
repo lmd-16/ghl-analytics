@@ -17,7 +17,6 @@ CREATE TABLE client (
     phone VARCHAR(20),
     email VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    industry VARCHAR(50),
     FOREIGN KEY (bus_id) REFERENCES business(id) ON DELETE CASCADE
 );
 
@@ -25,11 +24,12 @@ CREATE TABLE campaign (
     id INT AUTO_INCREMENT PRIMARY KEY,
     bus_id INT NOT NULL,
     client_id INT NOT NULL,
+    campaign_name VARCHAR(50) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     start_date DATE,
     end_date DATE,
     status VARCHAR(50) DEFAULT 'active',
-    FOREIGN KEY (id) REFERENCES business(id) ON DELETE CASCADE,
+    FOREIGN KEY (bus_id) REFERENCES business(id) ON DELETE CASCADE,
     FOREIGN KEY (client_id) REFERENCES client(id) ON DELETE CASCADE
 );
 
