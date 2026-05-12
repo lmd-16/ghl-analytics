@@ -140,3 +140,5 @@ CREATE TABLE webhook_logs(
     recieved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (bus_id) REFERENCES business(id) ON DELETE CASCADE
 );
+
+ALTER TABLE business ADD UNIQUE INDEX unique_email (email);
