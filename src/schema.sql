@@ -28,6 +28,7 @@ CREATE TABLE campaign (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     start_date DATE,
     end_date DATE,
+    daily_budget DECIMAL(10,2);
     status VARCHAR(50) DEFAULT 'active',
     FOREIGN KEY (bus_id) REFERENCES business(id) ON DELETE CASCADE,
     FOREIGN KEY (client_id) REFERENCES client(id) ON DELETE CASCADE
@@ -39,13 +40,13 @@ CREATE TABLE leads (
     f_name VARCHAR(50) NOT NULL,
     l_name VARCHAR(50) NOT NULL,
     email VARCHAR(255) NOT NULL,
-    source VARCHAR(50),
-    ghl_id INT NOT NULL,
+    phone VARCHAR(20),
+    ghl_id INT NULL,
     campaign_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     lead_status VARCHAR(50) DEFAULT 'new',
     FOREIGN KEY (bus_id) REFERENCES business(id) ON DELETE CASCADE,
-    FOREIGN KEY (campaign_id) REFERENCES campaign(id) ON DELETE CASCADE
+	FOREIGN KEY (campaign_id) REFERENCES campaign(id) ON DELETE CASCADE
 );
 
 CREATE TABLE appointments (
@@ -53,8 +54,7 @@ CREATE TABLE appointments (
     bus_id INT NOT NULL,
     lead_id INT NOT NULL,
     email VARCHAR(255) NOT NULL,
-    source VARCHAR(50),
-    ghl_appointment_id INT NOT NULL,
+    ghl_appointment_id INT NULL,
     campaign_id INT NOT NULL,
     scheduled_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -64,15 +64,14 @@ CREATE TABLE appointments (
     FOREIGN KEY (campaign_id) REFERENCES campaign(id) ON DELETE CASCADE
 );
 
-CREATE TABLE spend_entries (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    campaign_id INT NOT NULL,
-    source VARCHAR(50),
-    spend_date DATE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    amount INT NOT NULL,
-    FOREIGN KEY (campaign_id) REFERENCES campaign(id) ON DELETE CASCADE
-);
+-- CREATE TABLE spend_entries (
+--     id INT AUTO_INCREMENT PRIMARY KEY,
+--     campaign_id INT NOT NULL,
+--     spend_date DATE NOT NULL,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     amount INT NOT NULL,
+--     FOREIGN KEY (campaign_id) REFERENCES campaign(id) ON DELETE CASCADE
+-- );
 
 
 CREATE TABLE alert_rules (
