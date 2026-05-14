@@ -571,12 +571,12 @@ app.get('/api/campaigns/:id/metrics', authenticate, (req,res)=>{
     const campaign_id = req.params.id; 
     db.query(`
         SELECT c.id, c.start_date, c.end_date, c.campaign_name, c.daily_budget,
-        c.status, DATEDDIFF(COALESCE(c.end_date, CURRDATE()), c.start_date) as total_spend, 
+        c.status, DATEDIFF(COALESCE(c.end_date, CURDATE()), c.start_date) as total_spend, 
         COUNT(DISTINCT l.id) as total_leads, 
         COUNT(DISTINCT a.id) as total_appts,
         COUNT(DISTINCT CASE WHEN a.appt_status='showed' THEN a.id END) as total_shows,
         COUNT(DISTINCT cd.id) as total_closed_deals,
-        COALESCE(SUM(cd.deal_value),) as total_revenue
+        COALESCE(SUM(cd.deal_value),0) as total_revenue
         FROM campaign c
         LEFT JOIN leads l ON c.id = l.campaign_id
         LEFT JOIN appointments a ON l.id = a.lead_id
@@ -602,12 +602,14 @@ app.get('/api/campaigns/:id/metrics', authenticate, (req,res)=>{
                 status: data.status, 
                 days_run: data.days_run || 0,
                 total_leads: data.total_leads || 0, 
+                total_spend: Number(data.total_spend)|| 0,
                 cost_per_lead: data.total_leads > 0 ? (data.total_spend / data.total_leads).toFixed(2) : 0, 
                 total_appointments: data.total_appointments || 0, 
                 cost_per_appointment: data.total_appointments > 0 ? (data.total_spend / data.total_appointments).toFixed(2) : 0, 
                 total_shows: data.total_shows,
                 show_rate: data.show_rate > 0 ? ((data.total_shows / data.total_appointments) * 100).toFixed(2) : 0,
                 total_closed_deals: data.total_closed_deals, 
+                total_revenue: Number(data.total_revenue),
                 cost_per_acquisition: data.total_closed_deals > 0 ? (data.total_spend / data.total_closed_deals).toFixed(2) : 0, 
                 roas: data.total_spend > 0 ? (data.total_revenue / data.total_spend).toFixed(2) : 0
             };
@@ -619,7 +621,55 @@ app.get('/api/campaigns/:id/metrics', authenticate, (req,res)=>{
 
 
 });
+app.post('/api/closed-deals', authenticate, (req, res)=>{
+    const business_id = req.business.id; 
+    const {campaign_id, lead_id, deal_value, ghl_opp_id, lifetime_value, close_date } = req.body;
 
+    if(!campaign_id || !lead_id || !deal_value){
+        return res.status(400).json({error: "Missing required fields: campaign ID, lead ID or deal value"});
+    }
+    const final_close_date = close_date || new Date().toISOString().split('T')[0];
+    db.query('SELECT id FROM leads WHERE id = ? AND campaign_id = ? AND bus_id = ?', 
+        [lead_id, campaign_id, business_id],
+        (err,result)=>{
+            if(err){
+                return res.status(500).json({error: err.message});
+            }
+            if(result.length === 0){
+                return res.status(404).json({error: "Lead not found for this campaign"});
+            }
+        
+        db.query('INSERT INTO closed_deals(campaign_id, bus_id, lead_id, deal_value, lifetime_value, ghl_opp_id, close_date) VALUES(?,?,?,?,?,?,?)',
+        [campaign_id, business_id, lead_id, deal_value, lifetime_value, ghl_opp_id, final_close_date || new Date().toISOString().split('T')[0]],
+        (err2, result)=>{
+            if(err2){
+                return res.status(500).json({error: err2.message});
+            }
+            res.status(201).json({message: 'Closed deal created', deal_id: result.insertId});
+                }
+            );
+        }
+    );
+
+});
+
+app.get('/api/campaigns/:campaign_id/closed-deals', authenticate, (req,res)=>{
+    const business_id = req.business.id; 
+    const campaign_id = req.params.campaign_id; 
+
+    db.query(`SELECT cd.*, l.f_name, l.l_name, l.email FROM closed_deal cd
+        JOIN leads l ON cd.lead_id = l.id
+        WHERE cd.campaign_id = ? AND cs.bus_id = ? 
+        ORDER BY cd.close_date DESC`,
+        [campaign_id, business_id],
+        (err, result)=>{
+            if(err){
+                return res.status(500).json({error: err.message});
+            }
+            res.status(404).json(result);
+    });
+})
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
+
